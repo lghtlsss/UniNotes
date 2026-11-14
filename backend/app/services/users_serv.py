@@ -9,15 +9,16 @@ from app.passw_security import hash_password, verify_password
 from app.dependencies import create_access_token
 
 
-async def register_serv(data: SLoginAndRegister, db: AsyncSession = Depends(get_db)):
-    test_user = await db.execute(select(User).where(User.email == data.email)).scalar_one_or_none()
+async def register_serv(data: SLoginAndRegister, db: AsyncSession):
+    result = await db.execute(select(User).where(User.email == data.email))
+    test_user = result.scalar_one_or_none()
 
     if test_user is not None:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Пользователь с таким email уже существует")
 
     db_user = User(
         email=data.email,
-        password=hash_password(data.password),
+        hashed_password=hash_password(data.password),
     )
 
     db.add(db_user)
@@ -39,14 +40,15 @@ async def register_serv(data: SLoginAndRegister, db: AsyncSession = Depends(get_
     }
 
 
-async def login_serv(data: SLoginAndRegister, db: AsyncSession = Depends(get_db)):
-    test_user = await db.execute(select(User).where(User.email == data.email)).scalar_one_or_none()
+async def login_serv(data, db: AsyncSession):
+    result = await db.execute(select(User).where(User.email == data.username))
+    test_user = result.scalar_one_or_none()
 
     if test_user is None:
-        raise HTTPException(status_code=status.HTTP_404_CONFLICT, detail="Пользователь с таким email не найден")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь с таким email не найден")
 
     if not verify_password(data.password, test_user.hashed_password):
-        raise HTTPException(401, "Invalid email or password")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
     access_token = create_access_token(test_user.id)
 
@@ -54,4 +56,3 @@ async def login_serv(data: SLoginAndRegister, db: AsyncSession = Depends(get_db)
         "access_token": access_token,
         "token_type": "bearer"
     }
-

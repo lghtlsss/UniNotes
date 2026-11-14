@@ -5,10 +5,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str
-    JWT_ALGORITHM: str
-    JWT_SECRET: str
-    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    database_url: str
+    jwt_algorithm: str
+    jwt_secret: str
+    access_token_expire_minutes: int
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
