@@ -27,3 +27,9 @@ class SNoteResponse(BaseModel):
 
 class SNoteContentUpdate(BaseModel):
     content: dict[str, Any]
+    version: int
+
+
+class SNoteTitleUpdate(BaseModel):
+    title: str
+    version: int
