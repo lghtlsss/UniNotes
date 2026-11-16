@@ -31,6 +31,5 @@ class Note(Base):
     )
     version: Mapped[int] = mapped_column(
         default=1,
-        autoincrement=True,
         nullable=False,
     )
