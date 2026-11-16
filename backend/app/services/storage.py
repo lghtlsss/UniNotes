@@ -17,7 +17,7 @@ class StorageService:
             )
         )
 
-        self.bucket = settings.S3_BUCKET_NAME
+        self.bucket = settings.s3_bucket_name
 
     def upload_file(
         self,
