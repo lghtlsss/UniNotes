@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from app.config import settings
@@ -26,14 +26,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
     user_id = payload.get("sub")
     if user_id is None:
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token"
         )
+    try:
+        user_id = int(user_id)
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     user = await db.get(User, user_id)
     if user is None:
         raise HTTPException(
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found"
         )
 
