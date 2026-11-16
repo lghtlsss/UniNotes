@@ -24,7 +24,7 @@ async def get_single_note(note_id: int, db: AsyncSession = Depends(get_db), user
     return await note_by_id_serv(db, note_id, user.id)
 
 
-@router.put("/change_title/{note_id}", response_model=SNoteResponse)
+@router.patch("/change_title/{note_id}", response_model=SNoteResponse)
 async def change_title(new_title: str, note_id: int, db: AsyncSession = Depends(get_db),
                        user: User = Depends(get_current_user)):
     return await change_title_serv(new_title, note_id, db, user.id)
