@@ -1,2 +1,3 @@
 from app.services.users_serv import register_serv, login_serv
+from app.services.note_serv import create_note_serv, all_notes_serv, note_by_id_serv
 from app.services.storage import storage
