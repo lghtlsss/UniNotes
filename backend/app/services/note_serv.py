@@ -3,6 +3,7 @@ from app.schemas import SNoteCreate
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Note
 from sqlalchemy import select
+from datetime import datetime, timezone
 
 
 async def create_note_serv(data: SNoteCreate, db: AsyncSession, user_id: int) -> Note:
@@ -53,6 +54,8 @@ async def change_title_serv(new_title: str, note_id: int, db: AsyncSession, user
     db_note = await check_accessibility(note_id, db, user_id)
 
     db_note.title = new_title
+    db_note.updated_at = datetime.now(timezone.utc)
+
     try:
         await db.commit()
     except Exception:
@@ -66,6 +69,7 @@ async def update_content_serv(content, note_id: int, db: AsyncSession, user_id: 
     db_note = await check_accessibility(note_id, db, user_id)
 
     db_note.content = content.content
+    db_note.updated_at = datetime.now(timezone.utc)
 
     try:
         await db.commit()
