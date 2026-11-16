@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models import User
-from app.schemas import SNoteCreate, SNoteResponse
-from app.services import create_note_serv, note_by_id_serv, all_notes_serv, change_title_serv
+from app.schemas import SNoteCreate, SNoteResponse, SNoteContentUpdate
+from app.services import create_note_serv, note_by_id_serv, all_notes_serv, change_title_serv, update_content_serv
 
 router = APIRouter(prefix="/notes", tags=["Notes"])
 
@@ -28,3 +28,13 @@ async def get_single_note(note_id: int, db: AsyncSession = Depends(get_db), user
 async def change_title(new_title: str, note_id: int, db: AsyncSession = Depends(get_db),
                        user: User = Depends(get_current_user)):
     return await change_title_serv(new_title, note_id, db, user.id)
+
+
+@router.patch("/change_content/{note_id}", response_model=SNoteResponse)
+async def change_content(
+    content: SNoteContentUpdate,
+    note_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    return await update_content_serv(content, note_id, db, user.id)

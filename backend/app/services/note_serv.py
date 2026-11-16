@@ -39,14 +39,34 @@ async def note_by_id_serv(db: AsyncSession, note_id: int, user_id: int):
     return note
 
 
-async def change_title_serv(new_title: str, note_id: int, db: AsyncSession, user_id: int):
+async def check_accessibility(note_id: int, db: AsyncSession, user_id: int):
     res = await db.execute(select(Note).where(Note.id == note_id, Note.user_id == user_id))
     db_note = res.scalar_one_or_none()
 
     if db_note is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
 
+    return db_note
+
+
+async def change_title_serv(new_title: str, note_id: int, db: AsyncSession, user_id: int):
+    db_note = await check_accessibility(note_id, db, user_id)
+
     db_note.title = new_title
+    try:
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+    await db.refresh(db_note)
+    return db_note
+
+
+async def update_content_serv(content, note_id: int, db: AsyncSession, user_id: int):
+    db_note = await check_accessibility(note_id, db, user_id)
+
+    db_note.content = content.content
+
     try:
         await db.commit()
     except Exception:
