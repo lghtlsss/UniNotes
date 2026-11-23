@@ -4,7 +4,7 @@ from app.database import get_db
 from app.models import User
 from app.dependencies import get_current_user
 from app.schemas import SImageLoadResponse
-from app.services.images_serv import upload_image_serv, get_image_link
+from app.services.images_serv import upload_image_serv, get_image_link, delete_image_serv
 
 router = APIRouter(prefix="images", tags=["Images"])
 
@@ -20,3 +20,11 @@ async def get_link_for_image(image_id: int, note_id: int,
                              db: AsyncSession = Depends(get_db),
                              user: User = Depends(get_current_user)):
     return await get_image_link(image_id, note_id, db, user.id)
+
+
+@router.delete("/delete/{image_id}")
+async def delete_image(image_id: int, note_id: int,
+                       db: AsyncSession = Depends(get_db),
+                       user: User = Depends(get_current_user)
+                       ):
+    return await delete_image_serv(image_id, note_id, db, user.id)

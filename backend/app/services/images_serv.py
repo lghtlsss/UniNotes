@@ -40,7 +40,7 @@ async def upload_image_serv(note_id: int, file, db: AsyncSession, user_id):
     return uploaded_image
 
 
-async def get_image_link(image_id: int, note_id: int, db: AsyncSession, user_id: int):
+async def check_image_accessibility(image_id: int, note_id: int, db: AsyncSession, user_id: int):
     statement = await db.execute(
         select(Image).where(Image.id == image_id, Image.note_id == note_id, Note.user_id == user_id))
     image = statement.scalar_one_or_none()
@@ -51,6 +51,26 @@ async def get_image_link(image_id: int, note_id: int, db: AsyncSession, user_id:
     if not await storage.file_exists(image.object_key):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
 
+    return image
+
+
+async def get_image_link(image_id: int, note_id: int, db: AsyncSession, user_id: int):
+    image = await check_image_accessibility(image_id, note_id, db, user_id)
+
     link = await storage.generate_load_presigned_url(image.object_key, 7200)
 
     return {"temp_link": link}
+
+
+async def delete_image_serv(image_id: int, note_id: int, db: AsyncSession, user_id: int):
+    image = await check_image_accessibility(image_id, note_id, db, user_id)
+
+    try:
+        await storage.delete_file(image.object_key)
+        await db.delete(image)
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+
+    return {"message": "success"}
