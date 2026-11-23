@@ -51,6 +51,6 @@ async def get_image_link(image_id: int, note_id: int, db: AsyncSession, user_id:
     if not await storage.file_exists(image.object_key):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
 
-    link = await storage.generate_presigned_url(image.object_key, 7200)
+    link = await storage.generate_load_presigned_url(image.object_key, 7200)
 
     return {"temp_link": link}

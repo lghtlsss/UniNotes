@@ -36,7 +36,7 @@ class StorageService:
             }
         )
 
-    async def generate_presigned_url(
+    async def generate_load_presigned_url(
         self,
         object_key: str,
         expires_in: int = 3600
