@@ -20,11 +20,11 @@ async def upload_image_serv(note_id: int, file, db: AsyncSession, user_id):
         file.filename = 'untitled'
 
     object_key = f"{user_id}/notes/{note_id}/{uuid4()}{file.filename}"
-    storage.upload_file(file, object_key, file.content_type)
+    await storage.upload_file(file, object_key, file.content_type)
     # TODO: Сделать проверку на то, что файл реально того типа что указан через pillow
 
     uploaded_image = Image(
-        note_id=note_id,
+        note_id=note.id,
         object_key=object_key,
         filename=file.filename,
         size=file.size,
@@ -38,3 +38,19 @@ async def upload_image_serv(note_id: int, file, db: AsyncSession, user_id):
         raise
     await db.refresh(uploaded_image)
     return uploaded_image
+
+
+async def get_image_link(image_id: int, note_id: int, db: AsyncSession, user_id: int):
+    statement = await db.execute(
+        select(Image).where(Image.id == image_id, Image.note_id == note_id, Note.user_id == user_id))
+    image = statement.scalar_one_or_none()
+
+    if image is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note not found")
+
+    if not await storage.file_exists(image.object_key):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Image not found")
+
+    link = await storage.generate_presigned_url(image.object_key, 7200)
+
+    return {"temp_link": link}

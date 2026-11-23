@@ -2,6 +2,7 @@ from app.config import settings
 import boto3
 from botocore.config import Config
 from botocore.errorfactory import ClientError
+import asyncio
 
 
 class StorageService:
@@ -19,13 +20,14 @@ class StorageService:
 
         self.bucket = settings.s3_bucket_name
 
-    def upload_file(
+    async def upload_file(
         self,
         file,
         object_key: str,
         content_type: str
     ):
-        self.client.upload_fileobj(
+        await asyncio.to_thread(
+            self.client.upload_fileobj,
             file,
             self.bucket,
             object_key,
@@ -34,12 +36,13 @@ class StorageService:
             }
         )
 
-    def generate_presigned_url(
+    async def generate_presigned_url(
         self,
         object_key: str,
         expires_in: int = 3600
     ) -> str:
-        return self.client.generate_presigned_url(
+        return await asyncio.to_thread(
+            self.client.generate_presigned_url,
             "get_object",
             Params={
                 "Bucket": self.bucket,
@@ -48,15 +51,17 @@ class StorageService:
             ExpiresIn=expires_in
         )
 
-    def delete_file(self, object_key: str):
-        self.client.delete_object(
+    async def delete_file(self, object_key: str):
+        await asyncio.to_thread(
+            self.client.delete_object,
             Bucket=self.bucket,
             Key=object_key
         )
 
-    def file_exists(self, object_key: str) -> bool:
+    async def file_exists(self, object_key: str) -> bool:
         try:
-            self.client.head_object(
+            await asyncio.to_thread(
+                self.client.head_object,
                 Bucket=self.bucket,
                 Key=object_key
             )
