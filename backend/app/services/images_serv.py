@@ -2,6 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Note, Image
 from sqlalchemy import select
+from sqlalchemy.orm.attributes import flag_modified
 from app.services.storage_serv import storage
 from uuid import uuid4
 
@@ -65,9 +66,31 @@ async def get_image_link(image_id: int, note_id: int, db: AsyncSession, user_id:
 async def delete_image_serv(image_id: int, note_id: int, db: AsyncSession, user_id: int):
     image = await check_image_accessibility(image_id, note_id, db, user_id)
 
+    image_id = image.id
+    statement = await db.execute(select(Note).where(
+        Note.id == note_id,
+        Note.user_id == user_id)
+    )
+    note = statement.scalar_one_or_none()
+    if note is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Note nod found")
+
     try:
         await storage.delete_file(image.object_key)
         await db.delete(image)
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
+
+    note.content["content"] = [
+        item
+        for item in note.content["content"]
+        if not (item.get("type") == "image" and item.get("image_id") == image_id)
+    ]
+
+    flag_modified(note, "content")
+    try:
         await db.commit()
     except Exception:
         await db.rollback()
